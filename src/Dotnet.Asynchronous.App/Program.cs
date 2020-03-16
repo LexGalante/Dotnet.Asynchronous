@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Dotnet.Asynchronous.App
 {
@@ -8,7 +10,26 @@ namespace Dotnet.Asynchronous.App
     {
         static void Main(string[] args)
         {
-            ExamplePlinq();
+            try
+            {
+                ExamplePlinq();
+                Thread.Sleep(1000);
+                ExampleSingleThread();
+                Thread.Sleep(1000);
+                ExampleBackgroundSingleThread();
+                Thread.Sleep(1000);
+                ExampleGetThreadResult();
+                Thread.Sleep(1000);
+                ExampleMultiTasks();
+                Thread.Sleep(1000);
+                ExampleCancelationToken();
+                Console.ReadKey();
+            }
+            catch (Exception e)
+            {
+                Console.BackgroundColor = ConsoleColor.Red;
+                Console.WriteLine(e.Message);
+            }
         }
 
         private static void ExamplePlinq()
@@ -45,6 +66,100 @@ namespace Dotnet.Asynchronous.App
 
 
             Console.WriteLine("-----------------------------------------------");
+        }
+        
+        private static void ExampleSingleThread()
+        {
+            var thread1 = new Thread(new ThreadStart(() => 
+            {
+                var nums = Enumerable.Range(0, 10);
+                foreach (var num in nums)
+                    Console.WriteLine($"thread1 - loop iteration - {num}");
+            }));
+
+            thread1.Start();
+        }
+
+        private static void ExampleBackgroundSingleThread()
+        {
+            var thread2 = new Thread(new ThreadStart(() =>
+            {
+                var nums = Enumerable.Range(0, 10);
+                foreach (var num in nums)
+                    Console.WriteLine($"thread2 - loop iteration - {num}");
+            }));
+
+            thread2.IsBackground = true;
+            thread2.Start();
+        }
+
+        private static void ExampleGetThreadResult()
+        {
+            var task1 = Task.Run(() => 
+            {
+                var x = new Random().Next(1000, 9999);
+                Console.WriteLine($"task1 - get random - {x}");
+                Thread.Sleep(x);
+
+                return x;
+            });
+
+            var result = task1.GetAwaiter().GetResult();
+        }
+
+        private static void ExampleMultiTasks()
+        {
+            var source = new CancellationTokenSource();
+            var cancellationToken = source.Token;
+            var tasks = new Task[]
+            {
+                new Task(() => ExecuteTask(cancellationToken, 1), cancellationToken),
+                new Task(() => ExecuteTask(cancellationToken, 2), cancellationToken),
+                new Task(() => ExecuteTask(cancellationToken, 3), cancellationToken),
+                new Task(() => ExecuteTask(cancellationToken, 4), cancellationToken),
+                new Task(() => ExecuteTask(cancellationToken, 5), cancellationToken),
+                new Task(() => ExecuteTask(cancellationToken, 6), cancellationToken)
+            };
+
+            foreach(var task in tasks)
+            {
+                task.Start();
+                
+                var sort = new Random().Next(0, 1);
+                if (sort == 1)
+                    source.Cancel();
+            }
+        }
+
+        private static void ExampleCancelationToken()
+        {
+            var source = new CancellationTokenSource();
+            var cancellationToken = source.Token;
+            var tasks = new Task[]
+            {
+                new Task(() => ExecuteTask(cancellationToken, 7), cancellationToken),
+                new Task(() => ExecuteTask(cancellationToken, 8), cancellationToken),
+                new Task(() => ExecuteTask(cancellationToken, 9), cancellationToken),
+                new Task(() => ExecuteTask(cancellationToken, 10), cancellationToken),
+                new Task(() => ExecuteTask(cancellationToken, 11), cancellationToken),
+                new Task(() => ExecuteTask(cancellationToken, 12), cancellationToken)
+            };
+
+            foreach (var task in tasks)
+                task.Start();
+
+            source.Cancel();
+        }
+
+        private static void ExecuteTask(CancellationToken token, int number)
+        {
+            if (token.IsCancellationRequested)
+                Console.WriteLine($"task{number} - cancelation token requested");
+            else
+            {
+                Console.WriteLine($"task{number} - executed");
+                Thread.Sleep((number * 1000));
+            }
         }
     }
 }
