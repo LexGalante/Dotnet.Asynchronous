@@ -23,6 +23,8 @@ namespace Dotnet.Asynchronous.App
                 ExampleMultiTasks();
                 Thread.Sleep(1000);
                 ExampleCancelationToken();
+                Thread.Sleep(1000);
+                ExampleTaskContinueWith();
                 Console.ReadKey();
             }
             catch (Exception e)
@@ -160,6 +162,23 @@ namespace Dotnet.Asynchronous.App
                 Console.WriteLine($"task{number} - executed");
                 Thread.Sleep((number * 1000));
             }
+        }
+
+        private static void ExampleTaskContinueWith()
+        {
+            var task = Task.Factory.StartNew(() =>
+            {
+                Console.WriteLine($"taskContinueWith running...");
+                Thread.Sleep(5000);
+            });
+
+            task.ContinueWith(task => 
+            {
+                Console.WriteLine($"taskContinueWith can be finished? {task.Status.ToString()}");
+                Console.ReadKey();
+            });
+
+            task.Wait();
         }
     }
 }
