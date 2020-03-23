@@ -17,6 +17,10 @@ namespace Dotnet.Asynchronous.App
             {
                 Console.WriteLine($"[{DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")}] Inicio programa");
 
+                ExampleThreadInfo();
+                Thread.Sleep(1000);
+                ExampleWithLock();
+                Thread.Sleep(1000);
                 ExamplePlinq();
                 Thread.Sleep(1000);
                 ExampleSingleThread();
@@ -49,6 +53,65 @@ namespace Dotnet.Asynchronous.App
                 Console.WriteLine(e.Message);
             }
         }
+
+        private static void ExampleThreadInfo()
+        {
+            Console.WriteLine("----------------------------------------------------------------------------------------------");
+            Console.WriteLine("Exemplo thread info");
+
+            for(var i = 0; i < 3; i++)
+            {
+                var thread = new Thread(new ThreadStart(() =>
+                {
+                    Console.WriteLine($"ManagedThreadId = {Thread.CurrentThread.ManagedThreadId}");
+                    Console.WriteLine($"Name = {Thread.CurrentThread.Name}");
+                    Console.WriteLine($"Priority = {Thread.CurrentThread.Priority.ToString()}");
+                    Console.WriteLine($"CurrentUICulture = {Thread.CurrentThread.CurrentUICulture.TextInfo}");
+                    Console.WriteLine($"IsAlive = {Thread.CurrentThread.IsAlive}");
+                    Console.WriteLine($"IsBackground = {Thread.CurrentThread.IsBackground}");
+                    Console.WriteLine($"IsThreadPoolThread = {Thread.CurrentThread.IsThreadPoolThread}");
+                }))
+                {
+                    IsBackground = new Random().Next(0, 1) == 1 ? true : false
+                };
+
+                thread.Start();
+            }
+
+            Console.WriteLine("----------------------------------------------------------------------------------------------");
+        }
+
+        private static readonly Customer resource = new Customer()
+        {
+            Id = 1,
+            Name = "Alex",
+            Age = 38,
+        };
+
+        private static void ExampleWithLock()
+        {
+            Console.WriteLine("----------------------------------------------------------------------------------------------");
+            Console.WriteLine("Exemplo thread lock resource");
+
+            for (int i = 0; i < 5; i++)
+            {
+                new Thread(new ThreadStart(() =>
+                {
+                    bool lockTaken = false;
+                    Console.WriteLine($"[{DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")}] trying to lock resource");
+                    Monitor.Enter(resource, ref lockTaken);
+                    lock (resource)
+                    {
+                        Console.WriteLine($"[{DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")}] im obtain the resource");
+                        Thread.Sleep(2000);
+                    }
+                    Console.WriteLine($"[{DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")}] im lost the resource");
+                })).Start();
+            }
+
+            Console.WriteLine("----------------------------------------------------------------------------------------------");
+        }
+
 
         private static void ExamplePlinq()
         {
