@@ -193,7 +193,7 @@ namespace Dotnet.Asynchronous.App
             Console.WriteLine("----------------------------------------------------------------------------------------------");
             Console.WriteLine("Exemplo GET THREAD RESULT");
 
-            var task1 = Task.Run(() => 
+            var task1 = Task<int>.Run(() => 
             {
                 var x = new Random().Next(1000, 9999);
                 Console.WriteLine($"task1 - get random - {x}");
@@ -261,7 +261,10 @@ namespace Dotnet.Asynchronous.App
         private static void ExecuteTask(CancellationToken token, int number)
         {
             if (token.IsCancellationRequested)
+            {
                 Console.WriteLine($"task{number} - cancelation token requested");
+                token.ThrowIfCancellationRequested();
+            }
             else
             {
                 Console.WriteLine($"task{number} - executed");
